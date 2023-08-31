@@ -73,12 +73,8 @@ class CertificateCrafter
   def authorize(&block)
     @order.authorizations.each do |authorization|
       puts "Resolving DNS Challenge..."
-
       challenge = authorization.dns
-
       block.call DnsChallenge.new(domain, challenge)
-
-      sleep(5)
       challenge.request_validation
 
       while challenge.status == "pending"
