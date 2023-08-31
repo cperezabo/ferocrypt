@@ -17,7 +17,7 @@ accounts_provider.accounts.each do |account|
   account.domains.each do |domain|
     puts "Updating certificate for #{domain.bold} 🧹"
 
-    ferozo.clear_acme_records domain: domain
+    ferozo.clear_acme_records(domain:)
 
     certificate = crafter.craft(domain) do |challenge|
       challenge.add_dns_record_to ferozo

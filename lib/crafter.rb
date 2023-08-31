@@ -93,12 +93,12 @@ class CertificateCrafter
   def finalize
     private_key = OpenSSL::PKey::RSA.new(4096)
     csr = Acme::Client::CertificateRequest.new(
-      private_key: private_key,
+      private_key:,
       subject: { common_name: domain },
       names: domain_names
     )
 
-    @order.finalize(csr: csr)
+    @order.finalize(csr:)
 
     while @order.status == "processing"
       sleep(1)

@@ -52,14 +52,14 @@ class Ferozo
 
   def clear_acme_records(domain:)
     puts "Deleting old DNS records 🧹"
-    delete_dns_records_named "_acme-challenge.#{domain}", domain: domain
+    delete_dns_records_named "_acme-challenge.#{domain}", domain:
   end
 
   private
 
   def delete_dns_records_named(name, domain:)
-    records = dns_records_named(name, domain: domain)
-    records.each { |record| delete_dns_record_identified_as(record["id"], domain: domain) }
+    records = dns_records_named(name, domain:)
+    records.each { |record| delete_dns_record_identified_as(record["id"], domain:) }
     records
   end
 
@@ -77,7 +77,7 @@ class Ferozo
   end
 
   def dns_records_named(name, domain:)
-    dns_records(domain: domain).select { |record| record["name"] == name }
+    dns_records(domain:).select { |record| record["name"] == name }
   end
 
   def delete_dns_record_identified_as(id, domain:)
