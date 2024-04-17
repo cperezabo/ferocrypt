@@ -1,4 +1,4 @@
-FerozoAccount = Struct.new(:username, :password, :domains)
+FerozoAccount = Struct.new(:username, :password)
 
 class Ferozo
   def self.connect_with(account)
@@ -10,8 +10,15 @@ class Ferozo
   end
 
   def domains
-    response = @connection.get("/hosting/domain/listdomains")
-    response.body["result"]
+    @domains ||= begin
+      result = @connection.get("/hosting/domain/listdomains").body["result"]
+      all_domains = result.map { |record| record["domain"] }
+      all_domains.reject { |domain| domain.end_with? "ferozo.com" }
+    end
+  end
+
+  def domains_as_text
+    domains.join(", ")
   end
 
   def install_ssl(domain:, domain_alt:, private_key:, certificate:)
@@ -50,18 +57,15 @@ class Ferozo
     )
   end
 
-  def clear_acme_records(domain:)
+  def clear_acme_records
     puts "Deleting old DNS records 🧹"
-    delete_dns_records_named "_acme-challenge.#{domain}", domain:
+    domains.each do |domain|
+      records = dns_records_named("_acme-challenge.#{domain}", domain:)
+      records.each { |record| delete_dns_record_identified_as(record["id"], domain:) }
+    end
   end
 
   private
-
-  def delete_dns_records_named(name, domain:)
-    records = dns_records_named(name, domain:)
-    records.each { |record| delete_dns_record_identified_as(record["id"], domain:) }
-    records
-  end
 
   def dns_records(domain:)
     response = @connection.post(
