@@ -1,80 +1,56 @@
-class SSLCertificate
-  def initialize(domain:, domain_alt:, private_key:, certificate:)
-    @domain = domain
-    @domain_alt = domain_alt
-    @private_key = private_key
-    @certificate = certificate
-  end
-
-  def install_on(provider)
-    puts "Installing...".bold
-    provider.install_ssl(
-      domain: @domain,
-      domain_alt: @domain_alt,
-      private_key: @private_key,
-      certificate: @certificate,
-    )
-  end
-end
-
-class DnsChallenge
-  def initialize(domain, challenge)
-    @domain = domain
-    @record_name = "#{challenge.record_name}.#{domain}"
-    @record_type = challenge.record_type
-    @record_content = challenge.record_content
-  end
-
-  def add_dns_record_to(provider)
-    puts "Adding DNS Record #{@record_name.bold} #{@record_content.yellow.bold}"
-    provider.add_dns_record(
-      name: @record_name,
-      type: @record_type,
-      content: @record_content,
-      domain: @domain,
-    )
-  end
-end
-
 class CertificateCrafter
   def self.register_with(contact_email:)
     client = Acme::Client.new(
       private_key: OpenSSL::PKey::RSA.new(File.read("./private.pem")),
       directory: "https://acme-v02.api.letsencrypt.org/directory"
     )
-    # account = client.new_account(contact: "mailto:#{contact_email}", terms_of_service_agreed: true)
-
+    client.new_account(contact: "mailto:#{contact_email}", terms_of_service_agreed: true)
     new client
   end
+
+  def craft_in(ferozo)
+    puts "Crafting certificate for #{ferozo.domains_as_text.bold} ✨"
+    @ferozo = ferozo
+    @ferozo.clear_acme_records
+
+    begin
+      @order = create_order
+      authorize
+      finalize
+    rescue RuntimeError => e
+      puts e.message.red
+      exit!
+    end
+
+    puts "Done 🚀".bold
+  end
+
+  private
 
   def initialize(client)
     @client = client
   end
 
-  def craft(domain, &block)
-    puts "Crafting certificate ✨"
-
-    begin
-      attempts ||= 5
-      @order = @client.new_order(identifiers: ["*.#{domain}", domain])
-      authorize(&block)
-      finalize
-    rescue RuntimeError
-      attempts -= 1
-      raise unless attempts.positive?
-
-      puts "Retrying...".red
-      retry
-    end
+  def create_order
+    identifiers = @ferozo.domains.map { |domain| ["*.#{domain}", domain] }.flatten
+    @client.new_order(identifiers:)
   end
 
-  private
-
-  def authorize(&block)
+  def authorize
     @order.authorizations.each do |authorization|
-      puts "Resolving DNS Challenge..."
       challenge = authorization.dns
-      block.call DnsChallenge.new(domain, challenge)
+      record_name = "#{challenge.record_name}.#{authorization.domain}"
+      record_content = challenge.record_content
+
+      puts "Adding and validating DNS Record #{record_name} #{record_content.yellow.bold}"
+
+      @ferozo.add_dns_record(
+        name: record_name,
+        type: challenge.record_type,
+        content: record_content,
+        domain: authorization.domain,
+      )
+
       challenge.request_validation
 
       while challenge.status == "pending"
@@ -82,7 +58,7 @@ class CertificateCrafter
         challenge.reload
       end
 
-      raise "Challenge failed with: #{challenge.error['detail']}" unless challenge.status == "valid"
+      raise challenge.error["detail"] unless challenge.status == "valid"
     end
   end
 
@@ -101,8 +77,9 @@ class CertificateCrafter
       @order.reload
     end
 
-    SSLCertificate.new(
-      domain: domain_names.last,
+    puts "Installing...".bold
+    @ferozo.install_ssl(
+      domain:,
       domain_alt: domain_names,
       private_key: private_key.to_pem,
       certificate: @order.certificate,
