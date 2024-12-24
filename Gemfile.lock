@@ -1,55 +1,26 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    acme-client (2.0.17)
+    acme-client (2.0.19)
+      base64 (~> 0.2.0)
       faraday (>= 1.0, < 3.0.0)
       faraday-retry (>= 1.0, < 3.0.0)
-    ast (2.4.2)
     awesome_print (1.9.2)
+    base64 (0.2.0)
     colorize (0.8.1)
-    faraday (2.9.0)
-      faraday-net_http (>= 2.0, < 3.2)
-    faraday-net_http (3.1.0)
-      net-http
+    faraday (2.12.2)
+      faraday-net_http (>= 2.0, < 3.5)
+      json
+      logger
+    faraday-net_http (3.4.0)
+      net-http (>= 0.5.0)
     faraday-retry (2.2.1)
       faraday (~> 2.0)
-    json (2.7.2)
-    language_server-protocol (3.17.0.3)
-    net-http (0.4.1)
+    json (2.9.1)
+    logger (1.6.4)
+    net-http (0.6.0)
       uri
-    parallel (1.24.0)
-    parser (3.3.0.5)
-      ast (~> 2.4.1)
-      racc
-    prettier_print (1.2.1)
-    racc (1.7.3)
-    rainbow (3.1.1)
-    regexp_parser (2.9.0)
-    rexml (3.2.6)
-    rubocop (1.63.2)
-      json (~> 2.3)
-      language_server-protocol (>= 3.17.0)
-      parallel (~> 1.10)
-      parser (>= 3.3.0.2)
-      rainbow (>= 2.2.2, < 4.0)
-      regexp_parser (>= 1.8, < 3.0)
-      rexml (>= 3.2.5, < 4.0)
-      rubocop-ast (>= 1.31.1, < 2.0)
-      ruby-progressbar (~> 1.7)
-      unicode-display_width (>= 2.4.0, < 3.0)
-    rubocop-ast (1.31.2)
-      parser (>= 3.3.0.4)
-    ruby-lsp (0.0.4)
-      language_server-protocol
-      rubocop (>= 1.0)
-      sorbet-runtime
-      syntax_tree (>= 2.3)
-    ruby-progressbar (1.13.0)
-    sorbet-runtime (0.5.11349)
-    syntax_tree (6.2.0)
-      prettier_print (>= 1.2.0)
-    unicode-display_width (2.5.0)
-    uri (0.13.0)
+    uri (1.0.2)
 
 PLATFORMS
   arm64-darwin-21
@@ -61,7 +32,6 @@ DEPENDENCIES
   awesome_print (~> 1.9)
   colorize (~> 0.8.1)
   faraday (~> 2.3)
-  ruby-lsp (~> 0.0.4)
 
 BUNDLED WITH
    2.3.7
