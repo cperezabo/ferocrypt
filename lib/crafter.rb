@@ -8,31 +8,47 @@ class CertificateCrafter
     new client
   end
 
-  def craft_in(ferozo)
-    puts "Crafting certificate for #{ferozo.domains_as_text.bold} ✨"
-    @ferozo = ferozo
-    @ferozo.clear_acme_records
+  def craft_in(account)
+    puts "Crafting certificate for #{account.domains_as_text.bold} ✨"
+    @account = account
+
+    if updated?
+      puts "Already updated 🚀".bold
+      return
+    end
+
+    @account.clear_acme_records
 
     begin
       @order = create_order
       authorize
       finalize
+      update_status
+      puts "Done 🚀".bold
     rescue RuntimeError => e
       puts e.message.red
-      exit!
     end
-
-    puts "Done 🚀".bold
   end
 
   private
 
   def initialize(client)
     @client = client
+    @updated_accounts_file = File.open("status.txt", File::RDWR | File::CREAT | File::APPEND)
+  end
+
+  def updated?
+    @updated_accounts_file.seek 0
+    @updated_accounts_file.read.include? @account.domains_as_text
+  end
+
+  def update_status
+    @updated_accounts_file.write "#{@account.domains_as_text}\n"
+    @updated_accounts_file.flush
   end
 
   def create_order
-    identifiers = @ferozo.domains.map { |domain| ["*.#{domain}", domain] }.flatten
+    identifiers = @account.domains.map { |domain| ["*.#{domain}", domain] }.flatten
     @client.new_order(identifiers:)
   end
 
@@ -44,7 +60,7 @@ class CertificateCrafter
 
       puts "Adding and validating DNS Record #{record_name} #{record_content.yellow.bold}"
 
-      @ferozo.add_dns_record(
+      @account.add_dns_record(
         name: record_name,
         type: challenge.record_type,
         content: record_content,
@@ -78,7 +94,7 @@ class CertificateCrafter
     end
 
     puts "Installing...".bold
-    @ferozo.install_ssl(
+    @account.install_ssl(
       domain:,
       domain_alt: domain_names,
       private_key: private_key.to_pem,

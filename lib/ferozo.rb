@@ -1,10 +1,4 @@
-FerozoAccount = Struct.new(:username, :password)
-
-class Ferozo
-  def self.connect_with(account)
-    new(FerozoConnection.new(account.username, account.password))
-  end
-
+class FerozoAccount
   def initialize(connection)
     @connection = connection
   end
@@ -25,12 +19,12 @@ class Ferozo
     response = @connection.post(
       "/hosting/domain/installsslcrtkey",
       body: {
-        "params": {
-          "crt": certificate,
-          "key": private_key,
-          "domain": domain,
-          "domainAlt": domain_alt.join(", "),
-          "forcedhttps": 0,
+        params: {
+          crt: certificate,
+          key: private_key,
+          domain:,
+          domainAlt: domain_alt.join(", "),
+          forcedhttps: 0,
         },
       }
     )
@@ -44,14 +38,14 @@ class Ferozo
     @connection.post(
       "/hosting/dns/records/add",
       body: {
-        "params": {
-          "id": "",
-          "domain": domain,
-          "name": name,
-          "type": type,
-          "content": content,
-          "ttl": "14400",
-          "prio": "0",
+        params: {
+          id: "",
+          domain:,
+          name:,
+          type:,
+          content:,
+          ttl: "14400",
+          prio: "0",
         },
       }
     )
@@ -71,8 +65,8 @@ class Ferozo
     response = @connection.post(
       "/hosting/dns/zone/get",
       body: {
-        "params": {
-          "domain": domain,
+        params: {
+          domain:,
         },
       }
     )
@@ -88,9 +82,9 @@ class Ferozo
     @connection.post(
       "/hosting/dns/records/delete",
       body: {
-        "params": {
-          "id": id,
-          "domain": domain,
+        params: {
+          id:,
+          domain:,
         },
       }
     )
@@ -98,23 +92,18 @@ class Ferozo
 end
 
 class FerozoConnection
-  def initialize(username, password)
-    @username = username
-    @password = password
+  def initialize(phpsessid)
+    @phpsessid = phpsessid
   end
 
   def get(url)
     connection.get(url) do |req|
-      req.headers["Accept"] = "application/json"
-      req.headers["Cookie"] = "#{cookie}; locale=es"
       req.headers["CSRF-Token"] = csrf_token
     end
   end
 
   def post(url, body:)
     connection.post(url) do |req|
-      req.headers["Accept"] = "application/json"
-      req.headers["Cookie"] = "#{cookie}; locale=es"
       req.headers["CSRF-Token"] = csrf_token
       req.body = body.to_json
     end
@@ -125,28 +114,19 @@ class FerozoConnection
   def connection
     @connection ||= Faraday.new("https://ferozo.host") do |f|
       f.response :json
+      f.headers["Accept"] = "application/json"
+      f.headers["Cookie"] = cookie
     end
   end
 
   def csrf_token
     @csrf_token ||= begin
-      response = connection.get("/common/security/csrf/token/get") do |req|
-        req.headers["Accept"] = "application/json"
-        req.headers["Cookie"] = "#{cookie}; locale=es"
-      end
+      response = connection.get("/common/security/csrf/token/get")
       response.body["result"]["token"]
     end
   end
 
   def cookie
-    @cookie ||= begin
-      response = connection.post("/login_check") do |req|
-        req.body = URI.encode_www_form(_username: @username, _password: @password, locale: "es")
-        req.headers["Content-Type"] = "application/x-www-form-urlencoded; charset=utf-8"
-        req.headers["Content-Length"] = req.body.length.to_s
-        req.headers["Cookie"] = "PHPSESSID=;"
-      end
-      response.headers["set-cookie"]
-    end
+    @cookie ||= "PHPSESSID=#{@phpsessid}; isDhm=0; locale=es"
   end
 end
