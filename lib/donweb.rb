@@ -34,7 +34,16 @@ class DonWebAccountsProvider
 
   def reseller_id
     response = @connection.get("/apiv3/servicios/hosting/revendedor")
-    response.body["jsonMC"]["respuesta"]["items"].first["servicioID"]
+    json_response = response.body["jsonMC"]
+
+    if json_response["error"]
+      error_msg = json_response["error"]
+      puts "\n#{'✗'.red.bold} Authentication error: #{error_msg}"
+      puts "#{'Hint:'.yellow.bold} Update the PHPSESSID field in 1Password with the 'sitio' cookie value"
+      exit 1
+    end
+
+    json_response["respuesta"]["items"].first["servicioID"]
   end
 
   def accounts_ids
