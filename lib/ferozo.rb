@@ -53,10 +53,10 @@ class FerozoAccount
 
   def clear_acme_records
     puts "Deleting old DNS records 🧹"
-    domains.each do |domain|
+    domains.each { |domain|
       records = dns_records_named("_acme-challenge.#{domain}", domain:)
       records.each { |record| delete_dns_record_identified_as(record["id"], domain:) }
-    end
+    }
   end
 
   private
@@ -97,26 +97,26 @@ class FerozoConnection
   end
 
   def get(url)
-    connection.get(url) do |req|
+    connection.get(url) { |req|
       req.headers["CSRF-Token"] = csrf_token
-    end
+    }
   end
 
   def post(url, body:)
-    connection.post(url) do |req|
+    connection.post(url) { |req|
       req.headers["CSRF-Token"] = csrf_token
       req.body = body.to_json
-    end
+    }
   end
 
   private
 
   def connection
-    @connection ||= Faraday.new("https://ferozo.host") do |f|
+    @connection ||= Faraday.new("https://ferozo.host") { |f|
       f.response :json
       f.headers["Accept"] = "application/json"
       f.headers["Cookie"] = cookie
-    end
+    }
   end
 
   def csrf_token

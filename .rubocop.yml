@@ -1,5 +1,27 @@
 AllCops:
+  SuggestExtensions: false
   NewCops: enable
+
+Lint:
+  Severity: warning
+
+Style/BlockDelimiters:
+  EnforcedStyle: always_braces
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+
+Layout/FirstHashElementIndentation:
+  EnforcedStyle: consistent
+
+Layout/FirstArrayElementIndentation:
+  EnforcedStyle: consistent
+
+Layout/LineLength:
+  Enabled: false
+
+Layout/EndAlignment:
+  EnforcedStyleAlignWith: variable
 
 Style/Documentation:
   Enabled: false
@@ -7,8 +29,23 @@ Style/Documentation:
 Style/FrozenStringLiteralComment:
   EnforcedStyle: never
 
+Style/Lambda:
+  EnforcedStyle: literal
+
+Style/MultilineBlockChain:
+  Enabled: false
+
 Style/StringLiterals:
   EnforcedStyle: double_quotes
+
+Style/CombinableLoops:
+  Enabled: false
+
+Style/SymbolArray:
+  EnforcedStyle: brackets
+
+Metrics/AbcSize:
+  Enabled: false
 
 Metrics/MethodLength:
   Enabled: false
@@ -19,7 +56,13 @@ Metrics/BlockLength:
 Metrics/ClassLength:
   Enabled: false
 
-Metrics/AbcSize:
+Metrics/ParameterLists:
+  Enabled: false
+
+Metrics/PerceivedComplexity:
+  Enabled: false
+
+Metrics/CyclomaticComplexity:
   Enabled: false
 
 Style/TrailingCommaInHashLiteral:
@@ -31,5 +74,20 @@ Style/TrailingCommaInArrayLiteral:
 Style/TrailingCommaInArguments:
   Enabled: false
 
+Style/ClassVars:
+  Enabled: false
+
+Style/WordArray:
+  EnforcedStyle: brackets
+
 Naming/AsciiIdentifiers:
   Enabled: false
+
+Naming/FileName:
+  Enabled: false
+
+Naming/BinaryOperatorParameterName:
+  Enabled: false
+
+Naming/MethodParameterName:
+  MinNameLength: 1

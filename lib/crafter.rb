@@ -53,7 +53,7 @@ class CertificateCrafter
   end
 
   def authorize
-    @order.authorizations.each do |authorization|
+    @order.authorizations.each { |authorization|
       challenge = authorization.dns
       record_name = "#{challenge.record_name}.#{authorization.domain}"
       record_content = challenge.record_content
@@ -75,7 +75,7 @@ class CertificateCrafter
       end
 
       raise challenge.error["detail"] unless challenge.status == "valid"
-    end
+    }
   end
 
   def finalize

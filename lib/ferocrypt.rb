@@ -10,6 +10,6 @@ require_relative "crafter"
 
 crafter = CertificateCrafter.register_with contact_email: ARGV[0]
 
-DonWebAccountsProvider.with_each_account do |account|
+DonWebAccountsProvider.with_each_account { |account|
   crafter.craft_in(account)
-end
+}

@@ -4,26 +4,24 @@ class DonWebAccountsProvider
   end
 
   def initialize
-    @connection = Faraday.new("https://administracion.donweb.com") do |f|
+    @connection = Faraday.new("https://administracion.donweb.com") { |f|
       f.response :json
       f.headers["Accept"] = "application/json"
       f.headers["Cookie"] = "sitio=#{donweb_phpsessid}"
-    end
+    }
   end
 
   def with_each_account
     puts "Fetching accounts...".bold
 
-    accounts_ids.map do |id|
+    accounts_ids.map { |id|
       response = @connection.get("/apiv3/servicios/hosting/#{id}/datosAcceso")
       remotelogin_url = response.body["jsonMC"]["respuesta"]["servidorURL"]
-      response = @connection.get(remotelogin_url) do |r|
-        r.headers["Accept"] = "text/html"
-      end
+      response = @connection.get(remotelogin_url) { |r| r.headers["Accept"] = "text/html" }
       phpsessid = response.headers["set-cookie"].match(/PHPSESSID=([^;]+)/)[1]
 
       yield FerozoAccount.new(FerozoConnection.new(phpsessid))
-    end
+    }
   end
 
   private
