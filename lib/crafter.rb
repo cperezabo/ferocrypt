@@ -12,39 +12,46 @@ class CertificateCrafter
     puts "Crafting certificate for #{account.domains_as_text.bold} ✨"
     @account = account
 
-    if updated?
-      puts "Already updated 🚀".bold
-      return
-    end
+    with_status_file {
+      if certified_account?
+        puts "Already certified 🚀".bold
+        return
+      end
 
-    @account.clear_acme_records
+      @account.clear_acme_records
 
-    begin
-      @order = create_order
-      authorize
-      finalize
-      update_status
-      puts "Done 🚀".bold
-    rescue RuntimeError => e
-      puts e.message.red
-    end
+      begin
+        @order = create_order
+        authorize
+        finalize
+        update_account_status
+        puts "Done 🚀".bold
+      rescue RuntimeError => e
+        puts e.message.red
+      end
+    }
   end
 
   private
 
   def initialize(client)
     @client = client
-    @updated_accounts_file = File.open("status.txt", File::RDWR | File::CREAT | File::APPEND)
   end
 
-  def updated?
-    @updated_accounts_file.seek 0
-    @updated_accounts_file.read.include? @account.domains_as_text
+  def with_status_file(&block)
+    File.open("status.txt", File::RDWR | File::CREAT | File::APPEND) { |f|
+      @status_file = f
+      block.call
+    }
   end
 
-  def update_status
-    @updated_accounts_file.write "#{@account.domains_as_text}\n"
-    @updated_accounts_file.flush
+  def certified_account?
+    @status_file.seek 0
+    @status_file.read.include? @account.domains_as_text
+  end
+
+  def update_account_status
+    @status_file.write "#{@account.domains_as_text}\n"
   end
 
   def create_order
