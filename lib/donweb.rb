@@ -46,6 +46,8 @@ class DonWebAccountsProvider
 
   def accounts_ids
     response = @connection.get("/apiv3/servicios/hosting/revendedor/cuentas/#{reseller_id}?registrosPorPagina=9999999")
-    response.body["jsonMC"]["respuesta"]["items"].map { |item| item["id"] }
+    response.body["jsonMC"]["respuesta"]["items"]
+      .select { |item| item["estado"] == "ACTIVA" }
+      .map { |item| item["id"] }
   end
 end
