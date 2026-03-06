@@ -1,26 +1,22 @@
 # Ferocrypt
 
-A simple script to generate **Let's Encrypt** certificates and upload them to your **Ferozo** account.
+A simple script to generate **Let's Encrypt** wildcard certificates and install them on **Ferozo** hosting accounts via the **DonWeb** reseller API.
 
 It fails sometimes. If it does, try later, seriously; I haven't got the time to debug it
 
 ## Setup
 
-You need a 1Password account.
+The script needs the DonWeb session token (the `sitio` cookie value). There are two providers to obtain it:
 
-1. Install and setup `1Password CLI`.
-2. Add an item named `DonWeb` to your vault.
-3. Add a field named `PHPSESSID` to that item with the value of the `sitio` cookie from `donweb.com` (log in first).
+- **Web** (default): opens a Brave Browser window for manual login and extracts the cookie automatically. Requires `CHROMIUM_PATH` pointing to the Brave binary.
+- **Env**: reads the token from the `DONWEB_TOKEN` environment variable (supports `.env` files).
 
 ## Usage
 
 ```shell
-ruby lib/ferocrypt.rb your@email
+ruby lib/ferocrypt.rb your@email                # uses web provider (default)
+ruby lib/ferocrypt.rb your@email Env            # uses env provider
 ```
-
-## TODO
-
-- [ ] Tests
 
 ## Disclaimer
 

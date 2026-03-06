@@ -1,13 +1,13 @@
 class DonWebAccountsProvider
-  def self.with_each_account(&)
-    new.with_each_account(&)
+  def self.with_each_account(token_provider:, &)
+    new(token_provider).with_each_account(&)
   end
 
-  def initialize
+  def initialize(token_provider)
     @connection = Faraday.new("https://administracion.donweb.com") { |f|
       f.response :json
       f.headers["Accept"] = "application/json"
-      f.headers["Cookie"] = "sitio=#{donweb_phpsessid}"
+      f.headers["Cookie"] = "sitio=#{token_provider.provide}"
     }
   end
 
@@ -20,10 +20,6 @@ class DonWebAccountsProvider
   end
 
   private
-
-  def donweb_phpsessid
-    `op item get "DonWeb" --format=json | jq -r '.fields[]? | select(.label=="PHPSESSID") | .value'`
-  end
 
   def reseller_id
     response = @connection.get("/apiv3/servicios/hosting/revendedor")
