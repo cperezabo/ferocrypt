@@ -1,57 +1,37 @@
 class CertificateCrafter
-  def self.register_with(contact_email:)
+  def self.register_with(contact_email:, journal:)
     client = Acme::Client.new(
       private_key: OpenSSL::PKey::RSA.new(File.read("./private.pem")),
       directory: "https://acme-v02.api.letsencrypt.org/directory"
     )
     client.new_account(contact: "mailto:#{contact_email}", terms_of_service_agreed: true)
-    new client
+    new client, journal
   end
 
   def craft_in(account)
-    puts "Crafting certificate for #{account.domains_as_text.bold} ✨"
     @account = account
 
-    with_status_file {
-      if certified_account?
-        puts "Already certified 🚀".bold
-        return
-      end
+    return :already_certified if @account.certified_according_to?(@journal)
 
-      @account.clear_acme_records
+    puts "Crafting certificate for #{@account} ✨"
+    @account.clear_acme_records
 
-      begin
-        @order = create_order
-        authorize
-        finalize
-        update_account_status
-        puts "Done 🚀".bold
-      rescue RuntimeError => e
-        puts e.message.red
-      end
-    }
+    begin
+      @order = create_order
+      authorize
+      finalize
+      @account.record_certification_in(@journal)
+      puts "Done 🚀".bold
+    rescue RuntimeError => e
+      puts e.message.red
+    end
   end
 
   private
 
-  def initialize(client)
+  def initialize(client, journal)
     @client = client
-  end
-
-  def with_status_file(&block)
-    File.open("status.txt", File::RDWR | File::CREAT | File::APPEND) { |f|
-      @status_file = f
-      block.call
-    }
-  end
-
-  def certified_account?
-    @status_file.seek 0
-    @status_file.read.include? @account.domains_as_text
-  end
-
-  def update_account_status
-    @status_file.write "#{@account.domains_as_text}\n"
+    @journal = journal
   end
 
   def create_order

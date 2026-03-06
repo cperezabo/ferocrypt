@@ -14,15 +14,8 @@ class DonWebAccountsProvider
   def with_each_account
     puts "Fetching accounts...".bold
 
-    accounts_ids.filter_map { |id|
-      phpsessid = phpsessid_for_account(id)
-
-      unless phpsessid
-        puts "#{'✗'.red.bold} Account #{id}: no PHPSESSID received"
-        next
-      end
-
-      yield FerozoAccount.new(FerozoConnection.new(phpsessid))
+    accounts_ids.each { |id|
+      yield FerozoAccount.new(id, FerozoConnection.new(id, @connection))
     }
   end
 
@@ -51,15 +44,5 @@ class DonWebAccountsProvider
     response.body["jsonMC"]["respuesta"]["items"]
       .select { |item| item["estado"] == "ACTIVA" }
       .map { |item| item["id"] }
-  end
-
-  def phpsessid_for_account(id)
-    response = Faraday.get(remotelogin_url_for_account(id))
-    response.headers["set-cookie"]&.match(/PHPSESSID=([^;]+)/)&.[](1)
-  end
-
-  def remotelogin_url_for_account(id)
-    response = @connection.get("/apiv3/servicios/hosting/#{id}/datosAcceso")
-    response.body["jsonMC"]["respuesta"]["servidorURL"]
   end
 end

@@ -1,6 +1,19 @@
 class FerozoAccount
-  def initialize(connection)
+  def initialize(id, connection)
+    @id = id
     @connection = connection
+  end
+
+  def to_s
+    "Account #{@id}"
+  end
+
+  def certified_according_to?(journal)
+    journal.certified?(@id)
+  end
+
+  def record_certification_in(journal)
+    journal.record(@id, domains_as_text)
   end
 
   def domains
@@ -92,8 +105,9 @@ class FerozoAccount
 end
 
 class FerozoConnection
-  def initialize(phpsessid)
-    @phpsessid = phpsessid
+  def initialize(account_id, donweb_connection)
+    @account_id = account_id
+    @donweb_connection = donweb_connection
   end
 
   def get(url)
@@ -126,7 +140,22 @@ class FerozoConnection
     end
   end
 
+  def remotelogin_url
+    response = @donweb_connection.get("/apiv3/servicios/hosting/#{@account_id}/datosAcceso")
+    response.body["jsonMC"]["respuesta"]["servidorURL"]
+  end
+
+  def phpsessid
+    @phpsessid ||= begin
+      response = Faraday.get(remotelogin_url)
+      session_id = response.headers["set-cookie"]&.match(/PHPSESSID=([^;]+)/)&.[](1)
+      raise "Account #{@account_id}: no PHPSESSID received from remotelogin" unless session_id
+
+      session_id
+    end
+  end
+
   def cookie
-    @cookie ||= "PHPSESSID=#{@phpsessid}; isDhm=0; locale=es"
+    "PHPSESSID=#{phpsessid}; isDhm=0; locale=es"
   end
 end
