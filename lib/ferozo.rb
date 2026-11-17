@@ -43,12 +43,10 @@ class FerozoAccount
     )
 
     raise response.body["error"]["message"] if response.body.key?("error")
-
-    response
   end
 
   def add_dns_record(name:, type:, content:, domain:)
-    @connection.post(
+    response = @connection.post(
       "/hosting/dns/records/add",
       body: {
         params: {
@@ -62,6 +60,8 @@ class FerozoAccount
         },
       }
     )
+
+    raise "#{name}: #{response.body['error']['message']}" if response.body.key?("error")
   end
 
   def clear_acme_records

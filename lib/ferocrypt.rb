@@ -8,6 +8,7 @@ require "colorize"
 require_relative "token_providers"
 require_relative "donweb"
 require_relative "ferozo"
+require_relative "authoritative_dns"
 require_relative "crafter"
 require_relative "certification_journal"
 

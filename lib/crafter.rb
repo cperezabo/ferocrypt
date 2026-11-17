@@ -1,4 +1,6 @@
 class CertificateCrafter
+  PUBLICATION_TIMEOUT_SECONDS = 120
+
   def self.register_with(contact_email:, journal:)
     client = Acme::Client.new(
       private_key: OpenSSL::PKey::RSA.new(File.read("./private.pem")),
@@ -18,7 +20,14 @@ class CertificateCrafter
     begin
       @account.clear_acme_records
       @order = create_order
-      authorize
+      @pending_authorizations = @order.authorizations.select { |authorization| authorization.status == "pending" }
+      add_challenge_records
+      unless challenge_records_published?
+        puts "DNS records not published yet, run again later ⏳".yellow
+        return
+      end
+
+      validate_challenges
       finalize
       @account.record_certification_in(@journal, expires_on: certificate_expiration)
       puts "Done 🚀".bold
@@ -32,6 +41,7 @@ class CertificateCrafter
   def initialize(client, journal)
     @client = client
     @journal = journal
+    @dns = AuthoritativeDns.new
   end
 
   def create_order
@@ -39,30 +49,55 @@ class CertificateCrafter
     @client.new_order(identifiers:)
   end
 
-  def authorize
-    @order.authorizations.each { |authorization|
-      challenge = authorization.dns
-      record_name = "#{challenge.record_name}.#{authorization.domain}"
-      record_content = challenge.record_content
+  def add_challenge_records
+    @pending_authorizations.each { |authorization| add_challenge_record_for(authorization) }
+  end
 
-      puts "Adding and validating DNS Record #{record_name} #{record_content.yellow.bold}"
+  def challenge_records_published?
+    deadline = Time.now + PUBLICATION_TIMEOUT_SECONDS
+    until @pending_authorizations.all? { |authorization| challenge_record_published?(authorization) }
+      return false if Time.now > deadline
 
-      @account.add_dns_record(
-        name: record_name,
-        type: challenge.record_type,
-        content: record_content,
-        domain: authorization.domain,
-      )
+      sleep 5
+    end
+    true
+  end
 
-      challenge.request_validation
+  def challenge_record_published?(authorization)
+    @dns.published?(challenge_record_name_of(authorization), authorization.dns.record_content, domain: authorization.domain)
+  end
 
-      while challenge.status == "pending"
-        sleep(2)
-        challenge.reload
-      end
+  def challenge_record_name_of(authorization)
+    "#{authorization.dns.record_name}.#{authorization.domain}"
+  end
 
-      raise challenge.error["detail"] unless challenge.status == "valid"
-    }
+  def add_challenge_record_for(authorization)
+    record_name = challenge_record_name_of(authorization)
+    record_content = authorization.dns.record_content
+
+    puts "Adding DNS Record #{record_name} #{record_content.yellow.bold}"
+
+    @account.add_dns_record(
+      name: record_name,
+      type: authorization.dns.record_type,
+      content: record_content,
+      domain: authorization.domain,
+    )
+  end
+
+  def validate_challenges
+    @pending_authorizations.each { |authorization| validate(authorization.dns) }
+  end
+
+  def validate(challenge)
+    challenge.request_validation
+
+    while challenge.status == "pending"
+      sleep(2)
+      challenge.reload
+    end
+
+    raise challenge.error["detail"] unless challenge.status == "valid"
   end
 
   def finalize
