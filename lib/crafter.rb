@@ -14,9 +14,9 @@ class CertificateCrafter
     return :already_certified if @account.certified_according_to?(@journal)
 
     puts "Crafting certificate for #{@account} ✨"
-    @account.clear_acme_records
 
     begin
+      @account.clear_acme_records
       @order = create_order
       authorize
       finalize

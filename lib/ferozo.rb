@@ -136,7 +136,10 @@ class FerozoConnection
   def csrf_token
     @csrf_token ||= begin
       response = connection.get("/common/security/csrf/token/get")
-      response.body["result"]["token"]
+      token = response.body.is_a?(Hash) && response.body.dig("result", "token")
+      raise "Account #{@account_id}: no CSRF token received (HTTP #{response.status})" unless token
+
+      token
     end
   end
 
