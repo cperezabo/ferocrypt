@@ -29,13 +29,14 @@ module TokenProviders
     class Browser
       DEBUG_PORT = 9222
       DEBUG_URL = "http://localhost:#{DEBUG_PORT}".freeze
+      PROFILE_DIR = File.expand_path("../../.browser_profile", __dir__).freeze
 
       def self.open(url, &)
         new(url).open(&)
       end
 
       def open(&block)
-        @pid = spawn(chromium_path, "--remote-debugging-port=#{DEBUG_PORT}", @url, pgroup: true, err: "/dev/null")
+        @pid = spawn(chromium_path, "--remote-debugging-port=#{DEBUG_PORT}", "--user-data-dir=#{PROFILE_DIR}", @url, pgroup: true, err: "/dev/null")
         abort "Could not connect to browser" unless ready?
 
         block.call Ferrum::Browser.new(url: DEBUG_URL)

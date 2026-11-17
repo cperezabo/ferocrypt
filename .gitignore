@@ -3,3 +3,4 @@
 .env
 *.pem
 journal.txt
+.browser_profile/
