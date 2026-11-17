@@ -20,7 +20,7 @@ class CertificateCrafter
       @order = create_order
       authorize
       finalize
-      @account.record_certification_in(@journal)
+      @account.record_certification_in(@journal, expires_on: certificate_expiration)
       puts "Done 🚀".bold
     rescue RuntimeError => e
       puts e.message.red
@@ -80,13 +80,19 @@ class CertificateCrafter
       @order.reload
     end
 
+    @certificate = @order.certificate
+
     puts "Installing...".bold
     @account.install_ssl(
       domain:,
       domain_alt: domain_names,
       private_key: private_key.to_pem,
-      certificate: @order.certificate,
+      certificate: @certificate,
     )
+  end
+
+  def certificate_expiration
+    OpenSSL::X509::Certificate.new(@certificate).not_after.to_date
   end
 
   def domain

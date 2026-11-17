@@ -12,8 +12,8 @@ class FerozoAccount
     journal.certified?(@id)
   end
 
-  def record_certification_in(journal)
-    journal.record(@id, domains_as_text)
+  def record_certification_in(journal, expires_on:)
+    journal.record(@id, domains_as_text, expires_on:)
   end
 
   def domains
