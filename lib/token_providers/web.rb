@@ -6,23 +6,22 @@ module TokenProviders
     class Provider
       def provide
         Browser.open("https://micuenta.donweb.com/es-ar/dashboard") { |browser|
-          wait_for_user_confirmation
-          fetch_cookie_from(browser)
+          wait_for_session_cookie_in(browser)
         }
       end
 
       private
 
-      def fetch_cookie_from(browser)
-        cookie = browser.cookies["sitio"]
-        abort "Cookie 'sitio' not found." unless cookie
+      def wait_for_session_cookie_in(browser)
+        puts "Log in to the browser. It will continue on its own once you're logged in..."
+        loop {
+          cookie = browser.cookies["sitio"]
+          return cookie.value if cookie
 
-        cookie.value
-      end
-
-      def wait_for_user_confirmation
-        puts "Log in to the browser. Press Enter when done..."
-        $stdin.gets
+          sleep 1
+        }
+      rescue Ferrum::Error
+        abort "Browser closed before logging in."
       end
     end
 
